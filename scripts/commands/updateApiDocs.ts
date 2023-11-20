@@ -168,46 +168,59 @@ zxMain(async () => {
       `Invalid --version. Expected the format 0.44.0, but received ${args.version}`,
     );
   }
-  const versionWithoutPatch = versionMatch[0];
+  const version = versionMatch[0];
 
-  const pkg = PACKAGES.find((pkg) => pkg.name === args.package);
-  if (pkg === undefined) {
-    throw new Error(`Unrecognized package: ${args.package}`);
-  }
+  for (let versionNumber = +version.split(".")[1]; versionNumber >= +version.split(".")[1]-5; versionNumber--){
+    const versionWithoutPatch = "0."+versionNumber;
 
-  const destination = `${getRoot()}/.out/python/sources/${pkg.name}/${
-    args.version
-  }`;
-  if (await pathExists(destination)) {
-    console.log(`Skip downloading sources for ${pkg.name}:${args.version}`);
-  } else {
-    await downloadHtml({
-      baseUrl: pkg.baseUrl,
-      initialUrls: pkg.initialUrls,
+    const pkg = PACKAGES.find((pkg) => pkg.name === args.package);
+    if (pkg === undefined) {
+      throw new Error(`Unrecognized package: ${args.package}`);
+    }
+
+    await $`mkdir -p ${getRoot()}/docs/api/${pkg.name}/${versionWithoutPatch}`;
+    await $`mkdir -p ${getRoot()}/docs/api/${pkg.name}/${versionWithoutPatch}/release-notes`;
+    await $`touch ${getRoot()}/docs/api/${pkg.name}/${versionWithoutPatch}/release-notes/index.md`;
+
+    const destination = `${getRoot()}/.out/python/sources/${pkg.name}/${
+      versionWithoutPatch
+    }.0`;
+
+    const initialUrlsVersionsPath = pkg.initialUrls.map((initialUrl) => initialUrl.match(/.*\/(?=[^\/]+\/.*)/)+`stable/${versionWithoutPatch}/apidoc`);
+    const initialUrlsVersions = versionNumber > 43 ? initialUrlsVersionsPath.map((url) => url+'/index.html') : initialUrlsVersionsPath.map((url) => url+'/terra.html');
+    const baseUrlVersion = pkg.baseUrl+`/stable/${versionWithoutPatch}`;
+
+    if (await pathExists(destination)) {
+      console.log(`Skip downloading sources for ${pkg.name}:${args.version}`);
+    } else {
+      await downloadHtml({
+        baseUrl: versionWithoutPatch == version ? pkg.baseUrl : baseUrlVersion,
+        initialUrls: versionWithoutPatch == version ? pkg.initialUrls : initialUrlsVersions,
+        destination,
+      });
+    }
+
+    const baseSourceUrl = `https://github.com/${pkg.githubSlug}/tree/${versionWithoutPatch}/`;
+    const outputDir = versionWithoutPatch == version ? `${getRoot()}/docs/api/${pkg.name}`: `${getRoot()}/docs/api/${pkg.name}/${versionWithoutPatch}`;
+
+    const legacyReleaseNoteEntries = await processLegacyReleaseNotes(pkg);
+
+    console.log(`Deleting existing markdown for ${pkg.name}`);
+    await $`find ${outputDir}/* -not -path "*release-notes*" | xargs rm -rf {}`;
+
+    console.log(
+      `Convert sphinx html to markdown for ${pkg.name}:${versionWithoutPatch}`,
+    );
+    await convertHtmlToMarkdown(
       destination,
-    });
+      outputDir,
+      baseSourceUrl,
+      pkg,
+      versionWithoutPatch+".0",
+      legacyReleaseNoteEntries,
+      versionWithoutPatch,
+    );
   }
-
-  const baseSourceUrl = `https://github.com/${pkg.githubSlug}/tree/${versionWithoutPatch}/`;
-  const outputDir = `${getRoot()}/docs/api/${pkg.name}`;
-
-  const legacyReleaseNoteEntries = await processLegacyReleaseNotes(pkg);
-
-  console.log(`Deleting existing markdown for ${pkg.name}`);
-  await $`find ${outputDir}/* -not -path "*release-notes*" | xargs rm -rf {}`;
-
-  console.log(
-    `Convert sphinx html to markdown for ${pkg.name}:${versionWithoutPatch}`,
-  );
-  await convertHtmlToMarkdown(
-    destination,
-    outputDir,
-    baseSourceUrl,
-    pkg,
-    args.version,
-    legacyReleaseNoteEntries,
-    versionWithoutPatch,
-  );
 });
 
 async function downloadHtml(options: {
