@@ -226,7 +226,8 @@ async function saveHtml(options: {
         url.startsWith(`${baseUrl}/apidocs`) ||
         url.startsWith(`${baseUrl}/apidoc`) ||
         url.startsWith(`${baseUrl}/stubs`) ||
-        url.startsWith(`${baseUrl}/release_notes`)
+        url.startsWith(`${baseUrl}/release_notes`) ||
+        url.startsWith(`${baseUrl}/legacy_release_notes`)
       );
     },
     async onSuccess(url: string, content: string) {
@@ -261,6 +262,7 @@ async function convertHtmlToMarkdown(
       "apidoc/**.html",
       "stubs/**.html",
       "release_notes.html",
+      "legacy_release_notes.html",
     ],
     {
       cwd: htmlPath,
@@ -318,7 +320,11 @@ async function convertHtmlToMarkdown(
 
   for (const result of results) {
     let path = urlToPath(result.url);
-    if (pkg.hasSeparateReleaseNotes && path.endsWith("release-notes.md")) {
+    if (
+      pkg.hasSeparateReleaseNotes &&
+      path.endsWith("release-notes.md") &&
+      !path.endsWith("legacy_release-notes.md")
+    ) {
       // Historical versions use the same release notes files as the current API
       if (pkg.historical) {
         continue;
