@@ -2,8 +2,9 @@
 with open("0.45.md") as f:
     sections = f.read().split("\n## ")[1:]
 
-print(sections[0].split("\n", 1)[1])
-
+for s in sections:
+    print(s.split()[0])
+exit()
 sections_dict = {
    # E.g. "0.18.2": markdown_string
    s.split()[0]: f"## {s.split()[0]}\n" + s.split("\n", 1)[1]

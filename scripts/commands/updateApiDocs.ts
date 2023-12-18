@@ -42,6 +42,7 @@ import {
   currentReleaseNotesPath,
   generateReleaseNotesIndex,
   updateHistoricalTocFiles,
+  writeReleaseNotes,
 } from "../lib/releaseNotes";
 
 interface Arguments {
@@ -258,11 +259,11 @@ async function convertHtmlToMarkdown(
 ) {
   const files = await globby(
     [
-      "apidocs/**.html",
-      "apidoc/**.html",
-      "stubs/**.html",
+      //"apidocs/**.html",
+      //"apidoc/**.html",
+      //"stubs/**.html",
       "release_notes.html",
-      "legacy_release_notes.html",
+      //"legacy_release_notes.html",
     ],
     {
       cwd: htmlPath,
@@ -337,9 +338,11 @@ async function convertHtmlToMarkdown(
           : `/api/${pkg.name}/${link}`,
       );
 
-      path = currentReleaseNotesPath(pkg);
+      //path = currentReleaseNotesPath(pkg);
+      await writeReleaseNotes(pkg, result.markdown);
+    }else{
+      await writeFile(path, result.markdown);
     }
-    await writeFile(path, result.markdown);
   }
 
   console.log("Generating toc");
