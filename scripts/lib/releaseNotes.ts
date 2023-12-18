@@ -11,7 +11,7 @@
 // that they have been altered from the originals.
 
 import { $ } from "zx";
-import { getRoot } from "./fs";
+import { getRoot, pathExists } from "./fs";
 import { parse } from "path";
 import { Pkg } from "./sharedTypes";
 import { readFile, writeFile, readdir } from "fs/promises";
@@ -151,40 +151,78 @@ function addNewReleaseNoteToc(releaseNotesNode: any, newVersion: string) {
   }
 }
 
-function sortVersions(version1: string, version2: string){
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+function sortOrderReleaseNotesVersions(version1: string, version2: string){
+  const versionPath1 = version1.split("rc").slice(0,1)[0];
+  const versionPath2 = version2.split("rc").slice(0,1)[0];
   const comparison = version1.localeCompare(version2);
-  if(comparison == 0){
-    if(version1.length > version2.length){
+  if(versionPath1 == versionPath2){
+    if(version1.length < version2.length){
       return 1
     }
-
-    return -1
+    else if(version1.length > version2.length){
+      return -1
+    }
   }
-
-    return comparison;
+  return comparison;
 }
 
-export async function writeReleaseNotes(pkg: Pkg, releaseNoteMarkdown: string){
-  const sectionsAux = releaseNoteMarkdown.split("\n## ");
-  const sections: string[] = sectionsAux.slice(1, sectionsAux.length);
+function extractMarkdownByReleaseNotePatch(markdown: string): [Set<string>, {[id: string]: string;}]{
+  const sectionsSplit = markdown.split("\n## ");
+  const sections: string[] = sectionsSplit.slice(1, sectionsSplit.length);
 
+  const versionsModified = new Set<string>();
   const markdownByPatchVersion: {[id: string]: string;} = {};
+
   sections.forEach((section) => {
     const version = section.split("\n").slice(0,1)[0];
+    const versionMinor = version.split(".").slice(0,2).join(".");
+    versionsModified.add(versionMinor);
     const content = section.split("\n");
     content.shift();
     markdownByPatchVersion[version] = `## ${version}\n${content.join("\n")}`;
   });
 
-  const sortableArray = Object.entries(markdownByPatchVersion);
-  const sortedArray = sortableArray.sort(([, a], [, b]) => sortVersions(a,b));
-  const sortedObject = Object.fromEntries(sortedArray);
+  return [versionsModified, markdownByPatchVersion];
+}
 
-  //Object.entries(sortedObject).forEach(([version,_]) => console.log(version));
+export async function writeReleaseNotes(pkg: Pkg, releaseNoteMarkdown: string){
+  const [versionsFound, markdownByPatchVersion] = extractMarkdownByReleaseNotePatch(releaseNoteMarkdown);
 
+  // Read the release notes for each version found
+  for(let version of versionsFound){
+    const path = `${getRoot()}/docs/api/${pkg.name}/release-notes/${
+      version
+    }.md`;
+
+    if(!await pathExists(path)){
+      // We don't have any release note file for that version
+      continue;
+    }
+
+    const currentMarkdown = await readFile(path, "utf-8");
+    const [_, markdownByPatchOldVersion] = extractMarkdownByReleaseNotePatch(currentMarkdown);
+
+    for(let [versionPatch, markdownPatch] of Object.entries(markdownByPatchOldVersion)){
+      // We keep the release notes for a patch if it hasn't been modified for the current release notes
+      if(!markdownByPatchVersion.hasOwnProperty(versionPatch)){
+        markdownByPatchVersion[versionPatch] = markdownPatch;
+      }
+    }
+
+  }
+
+  // Sort all the release notes by patch
+  const markdownByPathEntries = Object.entries(markdownByPatchVersion);
+  const markdownByPatchSortedArray = markdownByPathEntries.sort(([a, ], [b, ]) => sortOrderReleaseNotesVersions(a,b));
+  const markdownByPatchVersionSorted = Object.fromEntries(markdownByPatchSortedArray);
+
+  //
   const markdownByMinorVersion: {[id: string]: string;} = {};
-  Object.entries(sortedObject).forEach(([versionPatch, markdown]) => {
+  Object.entries(markdownByPatchVersionSorted).forEach(([versionPatch, markdown]) => {
     const versionMinor = versionPatch.split(".").slice(0,2).join(".");
+
     if(!markdownByMinorVersion.hasOwnProperty(versionMinor)){
       markdownByMinorVersion[versionMinor] = `---
 title: Qiskit ${versionMinor} release notes
@@ -198,6 +236,7 @@ description: New features and bug fixes
     markdownByMinorVersion[versionMinor] += `${markdown}\n`;
   })
 
+  // Write all the modified files
   for(let [versionMinor, markdown] of Object.entries(markdownByMinorVersion)){
     const path = `${getRoot()}/docs/api/${pkg.name}/release-notes/${
       versionMinor
