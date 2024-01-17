@@ -6,11 +6,11 @@ python_api_type: exception
 python_api_name: qiskit.providers.ibmq.IBMQAccountMultipleCredentialsFound
 ---
 
-# qiskit.providers.ibmq.IBMQAccountMultipleCredentialsFound[¶](#qiskit-providers-ibmq-ibmqaccountmultiplecredentialsfound "Permalink to this headline")
+# qiskit.providers.ibmq.IBMQAccountMultipleCredentialsFound
 
 <span id="qiskit.providers.ibmq.IBMQAccountMultipleCredentialsFound" />
 
-`IBMQAccountMultipleCredentialsFound(*message)`
+`IBMQAccountMultipleCredentialsFound(*message)`[GitHub](https://github.com/qiskit/qiskit/tree/stable/0.40/qiskit/providers/ibmq/exceptions.py "view source code")
 
 Errors raised when multiple credentials are found.
 

@@ -6,11 +6,11 @@ python_api_type: exception
 python_api_name: qiskit.providers.ibmq.IBMQAccountCredentialsInvalidUrl
 ---
 
-# qiskit.providers.ibmq.IBMQAccountCredentialsInvalidUrl[¶](#qiskit-providers-ibmq-ibmqaccountcredentialsinvalidurl "Permalink to this headline")
+# qiskit.providers.ibmq.IBMQAccountCredentialsInvalidUrl
 
 <span id="qiskit.providers.ibmq.IBMQAccountCredentialsInvalidUrl" />
 
-`IBMQAccountCredentialsInvalidUrl(*message)`
+`IBMQAccountCredentialsInvalidUrl(*message)`[GitHub](https://github.com/qiskit/qiskit/tree/stable/0.40/qiskit/providers/ibmq/exceptions.py "view source code")
 
 Errors raised when an IBM Quantum Experience URL is invalid.
 

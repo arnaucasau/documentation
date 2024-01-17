@@ -6,11 +6,11 @@ python_api_type: exception
 python_api_name: qiskit.providers.ibmq.IBMQBackendError
 ---
 
-# qiskit.providers.ibmq.IBMQBackendError[¶](#qiskit-providers-ibmq-ibmqbackenderror "Permalink to this headline")
+# qiskit.providers.ibmq.IBMQBackendError
 
 <span id="qiskit.providers.ibmq.IBMQBackendError" />
 
-`IBMQBackendError(*message)`
+`IBMQBackendError(*message)`[GitHub](https://github.com/qiskit/qiskit/tree/stable/0.40/qiskit/providers/ibmq/exceptions.py "view source code")
 
 Base class for errors raised by the backend modules.
 

@@ -6,11 +6,11 @@ python_api_type: exception
 python_api_name: qiskit.providers.ibmq.IBMQAccountError
 ---
 
-# qiskit.providers.ibmq.IBMQAccountError[¶](#qiskit-providers-ibmq-ibmqaccounterror "Permalink to this headline")
+# qiskit.providers.ibmq.IBMQAccountError
 
 <span id="qiskit.providers.ibmq.IBMQAccountError" />
 
-`IBMQAccountError(*message)`
+`IBMQAccountError(*message)`[GitHub](https://github.com/qiskit/qiskit/tree/stable/0.40/qiskit/providers/ibmq/exceptions.py "view source code")
 
 Base class for errors raised by account management.
 

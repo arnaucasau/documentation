@@ -6,11 +6,11 @@ python_api_type: exception
 python_api_name: qiskit.providers.ibmq.IBMQProviderError
 ---
 
-# qiskit.providers.ibmq.IBMQProviderError[¶](#qiskit-providers-ibmq-ibmqprovidererror "Permalink to this headline")
+# qiskit.providers.ibmq.IBMQProviderError
 
 <span id="qiskit.providers.ibmq.IBMQProviderError" />
 
-`IBMQProviderError(*message)`
+`IBMQProviderError(*message)`[GitHub](https://github.com/qiskit/qiskit/tree/stable/0.40/qiskit/providers/ibmq/exceptions.py "view source code")
 
 Errors related to provider handling.
 

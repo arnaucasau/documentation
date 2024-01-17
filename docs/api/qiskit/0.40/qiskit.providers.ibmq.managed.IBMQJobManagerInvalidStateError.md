@@ -6,11 +6,11 @@ python_api_type: exception
 python_api_name: qiskit.providers.ibmq.managed.IBMQJobManagerInvalidStateError
 ---
 
-# qiskit.providers.ibmq.managed.IBMQJobManagerInvalidStateError[¶](#qiskit-providers-ibmq-managed-ibmqjobmanagerinvalidstateerror "Permalink to this headline")
+# qiskit.providers.ibmq.managed.IBMQJobManagerInvalidStateError
 
 <span id="qiskit.providers.ibmq.managed.IBMQJobManagerInvalidStateError" />
 
-`IBMQJobManagerInvalidStateError(*message)`
+`IBMQJobManagerInvalidStateError(*message)`[GitHub](https://github.com/qiskit/qiskit/tree/stable/0.40/qiskit/providers/ibmq/managed/exceptions.py "view source code")
 
 Errors raised when an operation is invoked in an invalid state.
 
