@@ -10,7 +10,7 @@ python_api_name: qiskit_aer.library.SaveProbabilitiesDict
 
 <span id="qiskit_aer.library.SaveProbabilitiesDict" />
 
-`SaveProbabilitiesDict(num_qubits, label='probabilities_dict', unnormalized=False, pershot=False, conditional=False)`
+`SaveProbabilitiesDict(num_qubits, label='probabilities_dict', unnormalized=False, pershot=False, conditional=False)`[GitHub](https://github.com/qiskit/qiskit/tree/stable/0.39/qiskit_aer/library/save_instructions/save_probabilities.py "view source code")
 
 Bases: `qiskit_aer.library.save_instructions.save_data.SaveAverageData`
 

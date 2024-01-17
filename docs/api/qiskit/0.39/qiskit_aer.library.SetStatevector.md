@@ -10,7 +10,7 @@ python_api_name: qiskit_aer.library.SetStatevector
 
 <span id="qiskit_aer.library.SetStatevector" />
 
-`SetStatevector(state)`
+`SetStatevector(state)`[GitHub](https://github.com/qiskit/qiskit/tree/stable/0.39/qiskit_aer/library/set_instructions/set_statevector.py "view source code")
 
 Bases: [`qiskit.circuit.instruction.Instruction`](qiskit.circuit.Instruction "qiskit.circuit.instruction.Instruction")
 

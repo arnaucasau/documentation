@@ -10,7 +10,7 @@ python_api_name: qiskit_aer.library.set_density_matrix
 
 <span id="qiskit_aer.library.set_density_matrix" />
 
-`set_density_matrix(self, state)`
+`set_density_matrix(self, state)`[GitHub](https://github.com/qiskit/qiskit/tree/stable/0.39/qiskit_aer/library/set_instructions/set_density_matrix.py "view source code")
 
 Set the density matrix state of the simulator.
 

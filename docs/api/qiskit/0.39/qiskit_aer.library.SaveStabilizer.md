@@ -10,7 +10,7 @@ python_api_name: qiskit_aer.library.SaveStabilizer
 
 <span id="qiskit_aer.library.SaveStabilizer" />
 
-`SaveStabilizer(num_qubits, label='stabilizer', pershot=False, conditional=False)`
+`SaveStabilizer(num_qubits, label='stabilizer', pershot=False, conditional=False)`[GitHub](https://github.com/qiskit/qiskit/tree/stable/0.39/qiskit_aer/library/save_instructions/save_stabilizer.py "view source code")
 
 Bases: `qiskit_aer.library.save_instructions.save_data.SaveSingleData`
 
