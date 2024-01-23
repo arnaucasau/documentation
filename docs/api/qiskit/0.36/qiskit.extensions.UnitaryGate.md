@@ -10,7 +10,7 @@ python_api_name: qiskit.extensions.UnitaryGate
 
 <span id="qiskit.extensions.UnitaryGate" />
 
-`UnitaryGate(data, label=None)`
+`UnitaryGate(data, label=None)`[GitHub](https://github.com/qiskit/qiskit/tree/stable/0.20/qiskit/extensions/unitary.py "view source code")
 
 Bases: [`qiskit.circuit.gate.Gate`](qiskit.circuit.Gate "qiskit.circuit.gate.Gate")
 
@@ -45,7 +45,7 @@ Add a decomposition of the instruction to the SessionEquivalenceLibrary.
 
 <span id="qiskit.extensions.UnitaryGate.adjoint" />
 
-`UnitaryGate.adjoint()`
+`UnitaryGate.adjoint()`[GitHub](https://github.com/qiskit/qiskit/tree/stable/0.20/qiskit/extensions/unitary.py "view source code")
 
 Return the adjoint of the unitary.
 
@@ -128,7 +128,7 @@ Set a classical equality condition on this instruction between the register or c
 
 <span id="qiskit.extensions.UnitaryGate.conjugate" />
 
-`UnitaryGate.conjugate()`
+`UnitaryGate.conjugate()`[GitHub](https://github.com/qiskit/qiskit/tree/stable/0.20/qiskit/extensions/unitary.py "view source code")
 
 Return the conjugate of the unitary.
 
@@ -136,7 +136,7 @@ Return the conjugate of the unitary.
 
 <span id="qiskit.extensions.UnitaryGate.control" />
 
-`UnitaryGate.control(num_ctrl_qubits=1, label=None, ctrl_state=None)`
+`UnitaryGate.control(num_ctrl_qubits=1, label=None, ctrl_state=None)`[GitHub](https://github.com/qiskit/qiskit/tree/stable/0.20/qiskit/extensions/unitary.py "view source code")
 
 Return controlled version of gate
 
@@ -185,7 +185,7 @@ updated if it was provided
 
 <span id="qiskit.extensions.UnitaryGate.inverse" />
 
-`UnitaryGate.inverse()`
+`UnitaryGate.inverse()`[GitHub](https://github.com/qiskit/qiskit/tree/stable/0.20/qiskit/extensions/unitary.py "view source code")
 
 Return the adjoint of the unitary.
 
@@ -225,7 +225,7 @@ To which to\_matrix is self.to\_matrix^exponent.
 
 <span id="qiskit.extensions.UnitaryGate.qasm" />
 
-`UnitaryGate.qasm()`
+`UnitaryGate.qasm()`[GitHub](https://github.com/qiskit/qiskit/tree/stable/0.20/qiskit/extensions/unitary.py "view source code")
 
 The qasm for a custom unitary gate This is achieved by adding a custom gate that corresponds to the definition of this gate. It gives the gate a random name if one hasn’t been given to it.
 
@@ -317,7 +317,7 @@ np.ndarray
 
 <span id="qiskit.extensions.UnitaryGate.transpose" />
 
-`UnitaryGate.transpose()`
+`UnitaryGate.transpose()`[GitHub](https://github.com/qiskit/qiskit/tree/stable/0.20/qiskit/extensions/unitary.py "view source code")
 
 Return the transpose of the unitary.
 
@@ -325,7 +325,7 @@ Return the transpose of the unitary.
 
 <span id="qiskit.extensions.UnitaryGate.validate_parameter" />
 
-`UnitaryGate.validate_parameter(parameter)`
+`UnitaryGate.validate_parameter(parameter)`[GitHub](https://github.com/qiskit/qiskit/tree/stable/0.20/qiskit/extensions/unitary.py "view source code")
 
 Unitary gate parameter has to be an ndarray.
 
