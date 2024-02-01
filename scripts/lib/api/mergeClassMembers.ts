@@ -66,17 +66,17 @@ export async function mergeClassMembers<T extends HtmlToMdResultWithUrl>(
           .use(remarkGfm)
           .use(remarkMath)
           .use(() => {
-            return async (tree) => {
-              for (const node of tree.children) {
+            return async (root: Root) => {
+              for (const node of root.children) {
                 await replaceMembersAfterTitle(
-                  tree,
+                  root,
                   node,
                   "Attributes",
                   attributesAndProps,
                 );
-                await replaceMembersAfterTitle(tree, node, "Methods", methods);
+                await replaceMembersAfterTitle(root, node, "Methods", methods);
                 await replaceMembersAfterTitle(
-                  tree,
+                  root,
                   node,
                   "Methods Defined Here",
                   methods,
@@ -152,5 +152,5 @@ async function parseMarkdownIncreasingHeading(
       });
     })
     .run(root);
-  return changedTree as Root;
+  return changedTree;
 }

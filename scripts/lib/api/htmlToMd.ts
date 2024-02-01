@@ -66,15 +66,7 @@ async function generateMarkdownFile(
     },
     span(h, node: any) {
       if (node.properties.className?.includes("math")) {
-        let value = node.children[0].value;
-        const prefix = "\\(";
-        const sufix = "\\)";
-        if (value.startsWith(prefix) && value.endsWith(sufix)) {
-          value = value.substring(prefix.length, value.length - sufix.length);
-          // We need to replace the single `|` characters for `\vert ` to avoid page crashes when
-          // they are used inside a table. For more information: https://github.com/Qiskit/documentation/issues/488
-          value = value.replace(/(?<!\\)\|/gm, "\\vert ");
-        }
+        const value = buildMath(node.children[0].value, "\\(", "\\)");
         return { type: "inlineMath", value };
       }
 
@@ -90,15 +82,7 @@ async function generateMarkdownFile(
     },
     pre(h, node: any) {
       if (node.properties.className?.includes("math")) {
-        let value = node.children[0].value;
-        const prefix = "\\[";
-        const sufix = "\\]";
-        if (value.startsWith(prefix) && value.endsWith(sufix)) {
-          value = value.substring(prefix.length, value.length - sufix.length);
-          // We need to replace the single `|` characters for `\vert ` to avoid page crashes when
-          // they are used inside a table. For more information: https://github.com/Qiskit/documentation/issues/488
-          value = value.replace(/(?<!\\)\|/gm, "\\vert ");
-        }
+        const value = buildMath(node.children[0].value, "\\[", "\\]");
         return { type: "math", value };
       }
       return defaultHandlers.pre(h, node);
@@ -276,4 +260,15 @@ function buildSpanId(id: string): MdxJsxFlowElement {
     ],
     children: [],
   };
+}
+
+function buildMath(value: string, prefix: string, sufix: string): string {
+  if (value.startsWith(prefix) && value.endsWith(sufix)) {
+    value = value.substring(prefix.length, value.length - sufix.length);
+    // We need to replace the single `|` characters for `\vert ` to avoid page crashes when
+    // they are used inside a table. For more information: https://github.com/Qiskit/documentation/issues/488
+    value = value.replace(/(?<!\\)\|/gm, "\\vert ");
+  }
+
+  return value;
 }
