@@ -19,7 +19,11 @@ Calculate the concurrence of a quantum state.
 The concurrence of a bipartite [`Statevector`](qiskit.quantum_info.Statevector "qiskit.quantum_info.Statevector") $\vert \psi\rangle$ is given by
 
 $$
+<<<<<<< HEAD
                       \[C(|\psi\rangle) = \sqrt{2(1 - Tr[\rho_0^2])}\]
+=======
+C(\vert \psi\rangle) = \sqrt{2(1 - Tr[\rho_0^2])}
+>>>>>>> main
 $$
 
 where $\rho_0 = Tr_1[\vert \psi\rangle\!\langle\psi\vert ]$ is the reduced state from by taking the $~qiskit.quantum_info.partial_trace$ of the input state.
