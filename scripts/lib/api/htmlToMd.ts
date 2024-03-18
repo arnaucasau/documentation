@@ -306,54 +306,55 @@ function buildMathExpression(node: any, type: "math" | "inlineMath"): any {
 }
 
 function buildFunction(h: H, node: any): any {
-  if (
-    node.properties.id &&
-    node.properties.apiname &&
-    node.properties.dedicatedfunctionpage &&
-    node.properties.signature
-  ) {
-    return {
-      type: "mdxJsxFlowElement",
-      name: "Function",
-      attributes: [
-        {
-          type: "mdxJsxAttribute",
-          name: "id",
-          value: node.properties.id,
-        },
-        {
-          type: "mdxJsxAttribute",
-          name: "apiName",
-          value: node.properties.apiname,
-        },
-        {
-          type: "mdxJsxAttribute",
-          name: "dedicatedFunctionPage",
+  return {
+    type: "mdxJsxFlowElement",
+    name: "Function",
+    attributes: [
+      {
+        type: "mdxJsxAttribute",
+        name: "id",
+        value: node.properties.id,
+      },
+      {
+        type: "mdxJsxAttribute",
+        name: "name",
+        value: node.properties.apiname,
+      },
+      {
+        type: "mdxJsxAttribute",
+        name: "dedicatedFunctionPage",
+        value: {
+          type: "mdxJsxAttributeValueExpression",
           value: node.properties.dedicatedfunctionpage,
         },
-        {
-          type: "mdxJsxAttribute",
-          name: "signature",
-          value: node.properties.signature,
-        },
-        {
-          type: "mdxJsxAttribute",
-          name: "github",
-          value: node.properties.github,
-        },
-        {
-          type: "mdxJsxAttribute",
-          name: "extraSignatures",
+      },
+      {
+        type: "mdxJsxAttribute",
+        name: "signature",
+        value: node.properties.signature,
+      },
+      {
+        type: "mdxJsxAttribute",
+        name: "github",
+        value: node.properties.github,
+      },
+      {
+        type: "mdxJsxAttribute",
+        name: "extraSignatures",
+        value: {
+          type: "mdxJsxAttributeValueExpression",
           value: node.properties.extrasignatures,
         },
-        {
-          type: "mdxJsxAttribute",
-          name: "extraGithubSourceLink",
+      },
+      {
+        type: "mdxJsxAttribute",
+        name: "extraGithubSourceLink",
+        value: {
+          type: "mdxJsxAttributeValueExpression",
           value: node.properties.extragithubsourcelink,
         },
-      ],
-      children: all(h, node),
-    };
-  }
-  return all(h, node);
+      },
+    ],
+    children: all(h, node),
+  };
 }

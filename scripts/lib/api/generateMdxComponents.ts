@@ -14,8 +14,8 @@ export type componentProps = {
   extraSignatures?: string[];
   githubSourceLink?: string;
   extraGithubSourceLink?: string[];
-  type?: string;
-  value?: string;
+  AttributeType?: string;
+  AttributeValue?: string;
 };
 
 export async function processMdxComponent(
@@ -160,11 +160,11 @@ export function generateAttributeComponent(props: componentProps): string {
   const output = [
     `<span class="target" id='${props.id}'/><h3>${props.name}</h3>`,
   ];
-  if (props.type) {
-    output.push(`<p><code>${props.type}</code></p>`);
+  if (props.AttributeType) {
+    output.push(`<p><code>${props.AttributeType}</code></p>`);
   }
-  if (props.value) {
-    output.push(`<p><code>${props.value}</code></p>`);
+  if (props.AttributeValue) {
+    output.push(`<p><code>${props.AttributeValue}</code></p>`);
   }
   return output.join("\n");
 }
@@ -172,20 +172,28 @@ export function generateAttributeComponent(props: componentProps): string {
 export async function generateFunctionComponent(
   props: componentProps,
 ): Promise<string> {
-  const signature = (await htmlHeaderToMd(props.signature!)).replaceAll("\n", "").replaceAll("'",'&#x27;');
+  const signature = (await htmlHeaderToMd(props.signature!))
+    .replaceAll("\n", "")
+    .replaceAll("'", "&#x27;");
   const extraSignatures: string[] = [];
   for (const sig of props.extraSignatures ?? []) {
-    extraSignatures.push(`'${(await htmlHeaderToMd(sig!)).replaceAll("\n", "").replaceAll("'",'&#x27;')}'`);
+    extraSignatures.push(
+      `&#x27;${(await htmlHeaderToMd(sig!))
+        .replaceAll("\n", "")
+        .replaceAll("'", "&#x27;")}&#x27;`,
+    );
   }
 
   return `<function 
     id='${props.id}'
-    apiName='${props.name}'
+    name='${props.name}'
     signature='${signature}'
-    dedicatedFunctionPage='${typeof props.name != undefined}'
-    github="${props.githubSourceLink}"
-    extraSignatures='[${extraSignatures.join(", ") ?? ''}]'
-    extraGithubSourceLink='[${props.extraGithubSourceLink ? props.extraGithubSourceLink.join(", ") : ""}]'    
+    dedicatedFunctionPage='${props.name == undefined}'
+    github='${props.githubSourceLink}'
+    extraSignatures='[${extraSignatures.join(", ")}]'
+    extraGithubSourceLink='[${
+      props.extraGithubSourceLink ? props.extraGithubSourceLink.join(", ") : ""
+    }]' >  
   `;
 }
 
@@ -289,16 +297,16 @@ function processAttribute(
 
   // The attributes have the following shape: name [: type] [= value]
   const name = text.slice(0, Math.min(colonIndex, equalIndex)).trim();
-  const type = text
+  const AttributeType = text
     .slice(Math.min(colonIndex + 1, equalIndex), equalIndex)
     .trim();
-  const value = text.slice(equalIndex, text.length).trim();
+  const AttributeValue = text.slice(equalIndex, text.length).trim();
 
   return {
     id,
     name,
-    type,
-    value,
+    AttributeType,
+    AttributeValue,
   };
 }
 
