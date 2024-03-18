@@ -1,4 +1,8 @@
 import { CheerioAPI, Cheerio, load, Element } from "cheerio";
+import { unified } from "unified";
+import rehypeParse from "rehype-parse";
+import rehypeRemark from "rehype-remark";
+import remarkStringify from "remark-stringify";
 
 import { ApiType } from "./Metadata";
 import { getLastPartFromFullIdentifier } from "../stringUtils";
@@ -14,7 +18,7 @@ export type componentProps = {
   value?: string;
 };
 
-export function processMdxComponent(
+export async function processMdxComponent(
   $: CheerioAPI,
   $main: Cheerio<any>,
   signatures: Cheerio<Element>[],
@@ -22,7 +26,7 @@ export function processMdxComponent(
   priorApiType: string | undefined,
   apiType: string,
   id: string,
-): [string, string] {
+): Promise<[string, string]> {
   const $firstElement = signatures.shift()!;
   const githubSourceLink = prepareGitHubLink(
     $firstElement,
@@ -73,7 +77,7 @@ export function processMdxComponent(
         id,
       ),
     );
-    extraProps.forEach((extraProp) => mergeProps(apiType, props, extraProp));
+    mergeProps(apiType, props, extraProps);
     return [generateMethodComponent(props), `</${apiType}>`];
   }
 
@@ -106,8 +110,8 @@ export function processMdxComponent(
         prepareGitHubLink($child, false),
       ),
     );
-    extraProps.forEach((extraProp) => mergeProps(apiType, props, extraProp));
-    return [generateFunctionComponent(props), `</${apiType}>`];
+    mergeProps(apiType, props, extraProps);
+    return [await generateFunctionComponent(props), `</${apiType}>`];
   }
 
   if (apiType === "exception") {
@@ -125,7 +129,7 @@ export function processMdxComponent(
         prepareGitHubLink($child, false),
       ),
     );
-    extraProps.forEach((extraProp) => mergeProps(apiType, props, extraProp));
+    mergeProps(apiType, props, extraProps);
     return [generateExceptionComponent(props), `</${apiType}>`];
   }
 
@@ -165,12 +169,24 @@ export function generateAttributeComponent(props: componentProps): string {
   return output.join("\n");
 }
 
-export function generateFunctionComponent(props: componentProps): string {
-  const descriptionHtml = `<span class="target" id="${props.id}"/><p><code>${props.signature}</code>${props.githubSourceLink}</p>`;
-  if (props.name) {
-    return `<h3>${props.name}</h3>${descriptionHtml}`;
+export async function generateFunctionComponent(
+  props: componentProps,
+): Promise<string> {
+  const signature = (await htmlHeaderToMd(props.signature!)).replaceAll("\n", "").replaceAll("'",'&#x27;');
+  const extraSignatures: string[] = [];
+  for (const sig of props.extraSignatures ?? []) {
+    extraSignatures.push(`'${(await htmlHeaderToMd(sig!)).replaceAll("\n", "").replaceAll("'",'&#x27;')}'`);
   }
-  return descriptionHtml;
+
+  return `<function 
+    id='${props.id}'
+    apiName='${props.name}'
+    signature='${signature}'
+    dedicatedFunctionPage='${typeof props.name != undefined}'
+    github="${props.githubSourceLink}"
+    extraSignatures='[${extraSignatures.join(", ") ?? ''}]'
+    extraGithubSourceLink='[${props.extraGithubSourceLink ? props.extraGithubSourceLink.join(", ") : ""}]'    
+  `;
 }
 
 export function generateExceptionComponent(props: componentProps): string {
@@ -217,6 +233,7 @@ function processMethod(
       // Overload methods have more than one <dt> tag, but only the first one
       // contains an id.
       return {
+        name: getLastPartFromFullIdentifier(id),
         signature: $child.html()!,
         githubSourceLink,
       };
@@ -228,6 +245,7 @@ function processMethod(
 
   return {
     id,
+    name: getLastPartFromFullIdentifier(id),
     signature: $child.html()!,
     githubSourceLink,
   };
@@ -334,9 +352,7 @@ export function prepareGitHubLink(
   }
   const href = originalLink.attr("href")!;
   originalLink.first().remove();
-  return !isMethod || href.includes(".py#")
-    ? ` <a href="${href}" title="view source code">GitHub</a>`
-    : "";
+  return !isMethod || href.includes(".py#") ? href : "";
 }
 
 /**
@@ -354,18 +370,32 @@ function findByText(
 export function mergeProps(
   apiType: ApiType,
   componentProps: componentProps,
-  props: componentProps,
+  props: componentProps[],
 ): void {
-  if (apiType == "attribute" || !props.signature || !props.githubSourceLink) {
-    return;
-  }
+  for (const prop of props) {
+    if (apiType == "attribute" || !prop.signature) {
+      continue;
+    }
 
-  if (!componentProps.extraSignatures) {
-    componentProps.extraSignatures = [];
+    if (!componentProps.extraSignatures) {
+      componentProps.extraSignatures = [];
+    }
+    componentProps.extraSignatures.push(prop.signature);
+
+    if (!componentProps.extraGithubSourceLink) {
+      componentProps.extraGithubSourceLink = [];
+    }
+    if (prop.githubSourceLink)
+      componentProps.extraGithubSourceLink.push(prop.githubSourceLink);
   }
-  if (!componentProps.extraGithubSourceLink) {
-    componentProps.extraGithubSourceLink = [];
-  }
-  componentProps.extraSignatures.push(props.signature);
-  componentProps.extraGithubSourceLink.push(props.githubSourceLink);
+}
+
+async function htmlHeaderToMd(html: string): Promise<string> {
+  const file = await unified()
+    .use(rehypeParse)
+    .use(rehypeRemark)
+    .use(remarkStringify)
+    .process(html);
+
+  return String(file);
 }

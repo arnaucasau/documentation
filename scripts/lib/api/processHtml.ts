@@ -24,13 +24,13 @@ export type ProcessedHtml = {
   isReleaseNotes: boolean;
 };
 
-export function processHtml(options: {
+export async function processHtml(options: {
   html: string;
   fileName: string;
   imageDestination: string;
   determineGithubUrl: (fileName: string) => string;
   releaseNotesTitle: string;
-}): ProcessedHtml {
+}): Promise<ProcessedHtml> {
   const {
     html,
     fileName,
@@ -61,7 +61,7 @@ export function processHtml(options: {
   preserveMathBlockWhitespace($, $main);
 
   const meta: Metadata = {};
-  processMembersAndSetMeta($, $main, meta);
+  await processMembersAndSetMeta($, $main, meta);
   maybeSetModuleMetadata($, $main, meta);
   if (meta.apiType === "module") {
     updateModuleHeadings($, $main, meta);
@@ -260,11 +260,11 @@ export function removeColonSpans($main: Cheerio<any>): void {
   $main.find(".colon").remove();
 }
 
-export function processMembersAndSetMeta(
+export async function processMembersAndSetMeta(
   $: CheerioAPI,
   $main: Cheerio<any>,
   meta: Metadata,
-): void {
+): Promise<void> {
   let continueMapMembers = true;
   while (continueMapMembers) {
     // members can be recursive, so we need to pick elements one by one
@@ -295,12 +295,13 @@ export function processMembersAndSetMeta(
       const $child = $(child);
       if (child.name !== "dt" || !apiType) {
         bodyElements.push(`<div>${$child.html()}</div>`);
+        continue;
       }
 
       signatures.push($child);
     }
 
-    const [openTag, closeTag] = processMdxComponent(
+    const [openTag, closeTag] = await processMdxComponent(
       $,
       $main,
       signatures,

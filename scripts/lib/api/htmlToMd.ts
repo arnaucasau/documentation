@@ -37,7 +37,7 @@ export async function sphinxHtmlToMarkdown(options: {
   determineGithubUrl: (fileName: string) => string;
   releaseNotesTitle: string;
 }): Promise<HtmlToMdResult> {
-  const processedHtml = processHtml(options);
+  const processedHtml = await processHtml(options);
   const markdown = await generateMarkdownFile(
     processedHtml.html,
     processedHtml.meta,
@@ -122,6 +122,9 @@ function prepareHandlers(meta: Metadata): Record<string, Handle> {
       }
 
       return defaultHandlers.div(h, node);
+    },
+    function(h, node: any): any {
+      return buildFunction(h, node);
     },
   };
 
@@ -300,4 +303,57 @@ function buildMathExpression(node: any, type: "math" | "inlineMath"): any {
     value = value.substring(prefix.length, value.length - sufix.length);
   }
   return { type: type, value };
+}
+
+function buildFunction(h: H, node: any): any {
+  if (
+    node.properties.id &&
+    node.properties.apiname &&
+    node.properties.dedicatedfunctionpage &&
+    node.properties.signature
+  ) {
+    return {
+      type: "mdxJsxFlowElement",
+      name: "Function",
+      attributes: [
+        {
+          type: "mdxJsxAttribute",
+          name: "id",
+          value: node.properties.id,
+        },
+        {
+          type: "mdxJsxAttribute",
+          name: "apiName",
+          value: node.properties.apiname,
+        },
+        {
+          type: "mdxJsxAttribute",
+          name: "dedicatedFunctionPage",
+          value: node.properties.dedicatedfunctionpage,
+        },
+        {
+          type: "mdxJsxAttribute",
+          name: "signature",
+          value: node.properties.signature,
+        },
+        {
+          type: "mdxJsxAttribute",
+          name: "github",
+          value: node.properties.github,
+        },
+        {
+          type: "mdxJsxAttribute",
+          name: "extraSignatures",
+          value: node.properties.extrasignatures,
+        },
+        {
+          type: "mdxJsxAttribute",
+          name: "extraGithubSourceLink",
+          value: node.properties.extragithubsourcelink,
+        },
+      ],
+      children: all(h, node),
+    };
+  }
+  return all(h, node);
 }
