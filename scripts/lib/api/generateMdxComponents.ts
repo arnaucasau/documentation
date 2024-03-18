@@ -1,4 +1,4 @@
-import { CheerioAPI, Cheerio, load, Element } from "cheerio";
+import { CheerioAPI, Cheerio, Element } from "cheerio";
 import { unified } from "unified";
 import rehypeParse from "rehype-parse";
 import rehypeRemark from "rehype-remark";
@@ -8,14 +8,13 @@ import { ApiType } from "./Metadata";
 import { getLastPartFromFullIdentifier } from "../stringUtils";
 
 export type componentProps = {
-  id?: string;
+  id: string;
   name?: string;
+  attributeType?: string;
+  attributeValue?: string;
+  githubSourceLink?: string;
   signature?: string;
   extraSignatures?: string[];
-  githubSourceLink?: string;
-  extraGithubSourceLink?: string[];
-  AttributeType?: string;
-  AttributeValue?: string;
 };
 
 export async function processMdxComponent(
@@ -36,16 +35,12 @@ export async function processMdxComponent(
   findByText($, $main, "em.property", apiType).remove();
 
   if (apiType == "class") {
-    const props = {
-      id,
-      signature: $firstElement.html()!,
-      githubSourceLink,
-    };
-    return [generateClassComponent(props), `</${apiType}>`];
+    const props = prepareClassProps($firstElement, githubSourceLink, id);
+    return [await generateMdxComponent(apiType, props), `</${apiType}>`];
   }
 
   if (apiType == "property") {
-    const props = processProperty(
+    const props = preparePropertyProps(
       $firstElement,
       $dl,
       priorApiType,
@@ -53,13 +48,13 @@ export async function processMdxComponent(
       id,
     );
     if (props) {
-      return [generatePropertyComponent(props), `</${apiType}>`];
+      return [await generateMdxComponent(apiType, props), `</${apiType}>`];
     }
     return ["", ""];
   }
 
   if (apiType == "method") {
-    const props = processMethod(
+    const props = prepareMethodProps(
       $,
       $firstElement,
       $dl,
@@ -68,7 +63,7 @@ export async function processMdxComponent(
       id,
     );
     const extraProps = signatures.map(($child) =>
-      processMethod(
+      prepareMethodProps(
         $,
         $child,
         $dl,
@@ -78,11 +73,11 @@ export async function processMdxComponent(
       ),
     );
     mergeProps(apiType, props, extraProps);
-    return [generateMethodComponent(props), `</${apiType}>`];
+    return [await generateMdxComponent(apiType, props), `</${apiType}>`];
   }
 
   if (apiType == "attribute") {
-    const props = processAttribute(
+    const props = prepareAttributeProps(
       $firstElement,
       $dl,
       priorApiType,
@@ -90,20 +85,20 @@ export async function processMdxComponent(
       id,
     );
     if (props) {
-      return [generateAttributeComponent(props), `</${apiType}>`];
+      return [await generateMdxComponent(apiType, props), `</${apiType}>`];
     }
     return ["", ""];
   }
 
   if (apiType === "function") {
-    const props = processFunctionOrException(
+    const props = prepareFunctionOrExceptionProps(
       $firstElement,
       $dl,
       id,
       githubSourceLink,
     );
     const extraProps = signatures.map(($child) =>
-      processFunctionOrException(
+      prepareFunctionOrExceptionProps(
         $child,
         $dl,
         id,
@@ -111,18 +106,18 @@ export async function processMdxComponent(
       ),
     );
     mergeProps(apiType, props, extraProps);
-    return [await generateFunctionComponent(props), `</${apiType}>`];
+    return [await generateMdxComponent(apiType, props), `</${apiType}>`];
   }
 
   if (apiType === "exception") {
-    const props = processFunctionOrException(
+    const props = prepareFunctionOrExceptionProps(
       $firstElement,
       $dl,
       id,
       githubSourceLink,
     );
     const extraProps = signatures.map(($child) =>
-      processFunctionOrException(
+      prepareFunctionOrExceptionProps(
         $child,
         $dl,
         id,
@@ -130,83 +125,29 @@ export async function processMdxComponent(
       ),
     );
     mergeProps(apiType, props, extraProps);
-    return [generateExceptionComponent(props), `</${apiType}>`];
+    return [await generateMdxComponent(apiType, props), `</${apiType}>`];
   }
 
   throw new Error(`Unhandled Python type: ${apiType}`);
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-export function generateClassComponent(props: componentProps): string {
-  return `<span class="target" id="${props.id}"/><p><code>${props.signature}</code>${props.githubSourceLink}</p>`;
+// ------------------------------------------------------------------
+// Prepare props for MDX components
+// ------------------------------------------------------------------
+
+function prepareClassProps(
+  $child: Cheerio<any>,
+  githubSourceLink: string,
+  id: string,
+) {
+  return {
+    id,
+    signature: $child.html()!,
+    githubSourceLink,
+  };
 }
 
-export function generatePropertyComponent(props: componentProps): string {
-  return `<span class="target" id='${props.id}'/><p><code>${props.signature}</code>${props.githubSourceLink}</p>`;
-}
-
-export function generateMethodComponent(props: componentProps): string {
-  if (props.id) {
-    return `<span class="target" id='${props.id}'/><p><code>${props.signature}</code>${props.githubSourceLink}</p>`;
-  }
-  return `<p><code>${props.signature}</code>${props.githubSourceLink}</p>`;
-}
-
-export function generateAttributeComponent(props: componentProps): string {
-  if (props.signature && props.githubSourceLink) {
-    return `<span class="target" id='${props.id}'/><p><code>${props.signature}</code>${props.githubSourceLink}</p>`;
-  }
-
-  const output = [
-    `<span class="target" id='${props.id}'/><h3>${props.name}</h3>`,
-  ];
-  if (props.AttributeType) {
-    output.push(`<p><code>${props.AttributeType}</code></p>`);
-  }
-  if (props.AttributeValue) {
-    output.push(`<p><code>${props.AttributeValue}</code></p>`);
-  }
-  return output.join("\n");
-}
-
-export async function generateFunctionComponent(
-  props: componentProps,
-): Promise<string> {
-  const signature = (await htmlHeaderToMd(props.signature!))
-    .replaceAll("\n", "")
-    .replaceAll("'", "&#x27;");
-  const extraSignatures: string[] = [];
-  for (const sig of props.extraSignatures ?? []) {
-    extraSignatures.push(
-      `&#x27;${(await htmlHeaderToMd(sig!))
-        .replaceAll("\n", "")
-        .replaceAll("'", "&#x27;")}&#x27;`,
-    );
-  }
-
-  return `<function 
-    id='${props.id}'
-    name='${props.name}'
-    signature='${signature}'
-    dedicatedFunctionPage='${props.name == undefined}'
-    github='${props.githubSourceLink}'
-    extraSignatures='[${extraSignatures.join(", ")}]'
-    extraGithubSourceLink='[${
-      props.extraGithubSourceLink ? props.extraGithubSourceLink.join(", ") : ""
-    }]' >  
-  `;
-}
-
-export function generateExceptionComponent(props: componentProps): string {
-  const descriptionHtml = `<span class="target" id="${props.id}"/><p><code>${props.signature}</code>${props.githubSourceLink}</p>`;
-  if (props.name) {
-    return `<h3>${props.name}</h3>${descriptionHtml}`;
-  }
-  return descriptionHtml;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function processProperty(
+function preparePropertyProps(
   $child: Cheerio<any>,
   $dl: Cheerio<any>,
   priorApiType: string | undefined,
@@ -226,7 +167,7 @@ function processProperty(
   };
 }
 
-function processMethod(
+function prepareMethodProps(
   $: CheerioAPI,
   $child: Cheerio<any>,
   $dl: Cheerio<any>,
@@ -237,14 +178,6 @@ function processMethod(
   if (id) {
     if (!priorApiType) {
       $dl.siblings("h1").text(getLastPartFromFullIdentifier(id));
-    } else if (!$child.attr("id")) {
-      // Overload methods have more than one <dt> tag, but only the first one
-      // contains an id.
-      return {
-        name: getLastPartFromFullIdentifier(id),
-        signature: $child.html()!,
-        githubSourceLink,
-      };
     } else {
       // Inline methods
       $(`<h3>${getLastPartFromFullIdentifier(id)}</h3>`).insertBefore($dl);
@@ -259,7 +192,7 @@ function processMethod(
   };
 }
 
-function processAttribute(
+function prepareAttributeProps(
   $child: Cheerio<any>,
   $dl: Cheerio<any>,
   priorApiType: string | undefined,
@@ -297,43 +230,75 @@ function processAttribute(
 
   // The attributes have the following shape: name [: type] [= value]
   const name = text.slice(0, Math.min(colonIndex, equalIndex)).trim();
-  const AttributeType = text
+  const attributeType = text
     .slice(Math.min(colonIndex + 1, equalIndex), equalIndex)
     .trim();
-  const AttributeValue = text.slice(equalIndex, text.length).trim();
+  const attributeValue = text.slice(equalIndex, text.length).trim();
 
   return {
     id,
     name,
-    AttributeType,
-    AttributeValue,
+    attributeType,
+    attributeValue,
   };
 }
 
-function processFunctionOrException(
+function prepareFunctionOrExceptionProps(
   $child: Cheerio<any>,
   $dl: Cheerio<any>,
   id: string,
   githubSourceLink: string,
 ): componentProps {
-  const pageHeading = $dl.siblings("h1").text();
-  if (id.endsWith(pageHeading) && pageHeading != "") {
-    // Page is already dedicated to apiType; no heading needed
-    return {
-      id,
-      signature: $child.html()!,
-      githubSourceLink,
-    };
-  }
-
-  const apiName = id.split(".").slice(-1)[0];
-  return {
+  const props = {
     id,
-    name: apiName,
     signature: $child.html()!,
     githubSourceLink,
   };
+
+  const pageHeading = $dl.siblings("h1").text();
+  if (id.endsWith(pageHeading) && pageHeading != "") {
+    // Page is already dedicated to apiType; no heading needed
+    return props;
+  }
+
+  return {
+    ...props,
+    name: id.split(".").slice(-1)[0],
+  };
 }
+
+// ------------------------------------------------------------------
+// Generate MDX components
+// ------------------------------------------------------------------
+
+export async function generateMdxComponent(
+  apiType: ApiType,
+  props: componentProps,
+): Promise<string> {
+  const type = props.attributeType
+    ? props.attributeType.replaceAll("'", "&#x27;")
+    : undefined;
+  const value = props.attributeValue
+    ? props.attributeValue.replaceAll("'", "&#x27;")
+    : undefined;
+  const signature = await htmlHeaderToMd(props.signature!);
+  const extraSignatures: string[] = [];
+  for (const sig of props.extraSignatures ?? []) {
+    extraSignatures.push(`&#x27;${await htmlHeaderToMd(sig!)}&#x27;`);
+  }
+
+  return `<${apiType} 
+    id='${props.id}'
+    name='${props.name}'
+    attributeType='${type}'
+    attributeValue='${value}'
+    github='${props.githubSourceLink}'
+    signature='${signature}'
+    extraSignatures='[${extraSignatures.join(", ")}]'
+    >
+  `;
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
@@ -389,12 +354,6 @@ export function mergeProps(
       componentProps.extraSignatures = [];
     }
     componentProps.extraSignatures.push(prop.signature);
-
-    if (!componentProps.extraGithubSourceLink) {
-      componentProps.extraGithubSourceLink = [];
-    }
-    if (prop.githubSourceLink)
-      componentProps.extraGithubSourceLink.push(prop.githubSourceLink);
   }
 }
 
@@ -405,5 +364,5 @@ async function htmlHeaderToMd(html: string): Promise<string> {
     .use(remarkStringify)
     .process(html);
 
-  return String(file);
+  return String(file).replaceAll("\n", "").replaceAll("'", "&#x27;");
 }

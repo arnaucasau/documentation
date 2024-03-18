@@ -123,8 +123,23 @@ function prepareHandlers(meta: Metadata): Record<string, Handle> {
 
       return defaultHandlers.div(h, node);
     },
+    class(h, node: any): any {
+      return buildMdxComponent(h, node);
+    },
+    property(h, node: any): any {
+      return buildMdxComponent(h, node);
+    },
+    method(h, node: any): any {
+      return buildMdxComponent(h, node);
+    },
+    attribute(h, node: any): any {
+      return buildMdxComponent(h, node);
+    },
     function(h, node: any): any {
-      return buildFunction(h, node);
+      return buildMdxComponent(h, node);
+    },
+    exception(h, node: any): any {
+      return buildMdxComponent(h, node);
     },
   };
 
@@ -305,56 +320,75 @@ function buildMathExpression(node: any, type: "math" | "inlineMath"): any {
   return { type: type, value };
 }
 
-function buildFunction(h: H, node: any): any {
-  return {
+function buildMdxComponent(h: H, node: any): any {
+  const apiType = node.tagName.charAt(0).toUpperCase() + node.tagName.slice(1);
+
+  const hastTree = {
     type: "mdxJsxFlowElement",
-    name: "Function",
+    name: apiType,
     attributes: [
       {
         type: "mdxJsxAttribute",
         name: "id",
         value: node.properties.id,
       },
-      {
-        type: "mdxJsxAttribute",
-        name: "name",
-        value: node.properties.apiname,
-      },
-      {
-        type: "mdxJsxAttribute",
-        name: "dedicatedFunctionPage",
-        value: {
-          type: "mdxJsxAttributeValueExpression",
-          value: node.properties.dedicatedfunctionpage,
-        },
-      },
-      {
-        type: "mdxJsxAttribute",
-        name: "signature",
-        value: node.properties.signature,
-      },
-      {
-        type: "mdxJsxAttribute",
-        name: "github",
-        value: node.properties.github,
-      },
-      {
-        type: "mdxJsxAttribute",
-        name: "extraSignatures",
-        value: {
-          type: "mdxJsxAttributeValueExpression",
-          value: node.properties.extrasignatures,
-        },
-      },
-      {
-        type: "mdxJsxAttribute",
-        name: "extraGithubSourceLink",
-        value: {
-          type: "mdxJsxAttributeValueExpression",
-          value: node.properties.extragithubsourcelink,
-        },
-      },
     ],
     children: all(h, node),
   };
+
+  addSimpleAttributeToHastTree(hastTree, "name", node.properties.name);
+  addSimpleAttributeToHastTree(
+    hastTree,
+    "attributeType",
+    node.properties.attributetype,
+  );
+  addSimpleAttributeToHastTree(
+    hastTree,
+    "attributeValue",
+    node.properties.attributevalue,
+  );
+  addSimpleAttributeToHastTree(hastTree, "github", node.properties.github);
+  addSimpleAttributeToHastTree(
+    hastTree,
+    "signature",
+    node.properties.signature,
+  );
+  addExpressionAttributeToHastTree(
+    hastTree,
+    "extraSignatures",
+    node.properties.extrasignatures,
+  );
+
+  return hastTree;
+}
+
+function addSimpleAttributeToHastTree(
+  hastTree: any,
+  name: string,
+  value: string,
+): void {
+  if (value && value != "undefined") {
+    hastTree.attributes.push({
+      type: "mdxJsxAttribute",
+      name,
+      value,
+    });
+  }
+}
+
+function addExpressionAttributeToHastTree(
+  hastTree: any,
+  name: string,
+  value: string,
+): void {
+  if (value != "[]") {
+    hastTree.attributes.push({
+      type: "mdxJsxAttribute",
+      name,
+      value: {
+        type: "mdxJsxAttributeValueExpression",
+        value,
+      },
+    });
+  }
 }
