@@ -17,155 +17,99 @@ export type componentProps = {
   extraSignatures?: string[];
 };
 
-
-function prepareProps(
-  $: CheerioAPI,
-  $child: Cheerio<Element>,
-  $dl: Cheerio<any>,
-  priorApiType: string | undefined,
-  apiType: ApiType,
-  githubSourceLink: string,
-  id: string
-  ): componentProps | undefined {    
-    const preparePropsPerApiType = {
-      "class" : () => prepareClassProps($child, githubSourceLink, id),
-      "property" : () => preparePropertyProps($child, $dl, priorApiType, githubSourceLink, id),
-      "method" : () => prepareMethodProps($, $child, $dl, priorApiType, githubSourceLink, id),
-      "attribute": () => prepareAttributeProps($child, $dl, priorApiType, githubSourceLink, id),
-      "function": () => prepareFunctionOrExceptionProps($child, $dl, id, githubSourceLink),
-      "exception": () => prepareFunctionOrExceptionProps($child, $dl, id, githubSourceLink),
-    }
-
-    if(apiType == "module"){
-      throw new Error(`Unhandled Python type: ${apiType}`);
-    }
-
-    return preparePropsPerApiType[apiType]();
-}
-
 export async function processMdxComponent(
   $: CheerioAPI,
   $main: Cheerio<any>,
   signatures: Cheerio<Element>[],
   $dl: Cheerio<any>,
-  priorApiType: string | undefined,
-  apiType: string,
+  priorApiType: ApiType | undefined,
+  apiType: ApiType,
   id: string,
 ): Promise<[string, string]> {
-  const $firstElement = signatures.shift()!;
+  findByText($, $main, "em.property", apiType).remove();
+
+  const $firstSignature = signatures.shift()!;
   const githubSourceLink = prepareGitHubLink(
-    $firstElement,
+    $firstSignature,
     apiType === "method",
   );
 
-  findByText($, $main, "em.property", apiType).remove();
+  const componentProps = prepareProps(
+    $,
+    $firstSignature,
+    $dl,
+    priorApiType,
+    apiType,
+    githubSourceLink,
+    id,
+  );
 
-  if (apiType == "class") {
-    const props = prepareClassProps($firstElement, githubSourceLink, id);
-    return [await generateMdxComponent(apiType, props), `</${apiType}>`];
-  }
-
-  if (apiType == "property") {
-    const props = preparePropertyProps(
-      $firstElement,
-      $dl,
-      priorApiType,
-      githubSourceLink,
-      id,
-    );
-    if (props) {
-      return [await generateMdxComponent(apiType, props), `</${apiType}>`];
-    }
-    return ["", ""];
-  }
-
-  if (apiType == "method") {
-    const props = prepareMethodProps(
-      $,
-      $firstElement,
-      $dl,
-      priorApiType,
-      githubSourceLink,
-      id,
-    );
-    const extraProps = signatures.map(($child) =>
-      prepareMethodProps(
+  const extraProps = signatures
+    .map(($overloadedSignature) =>
+      prepareProps(
         $,
-        $child,
+        $overloadedSignature,
         $dl,
         apiType,
-        prepareGitHubLink($child, true),
+        apiType,
+        prepareGitHubLink($overloadedSignature, apiType === "method"),
         id,
       ),
-    );
-    mergeProps(apiType, props, extraProps);
-    return [await generateMdxComponent(apiType, props), `</${apiType}>`];
-  }
+    )
+    .flatMap((prop) => (prop ? prop : []));
 
-  if (apiType == "attribute") {
-    const props = prepareAttributeProps(
-      $firstElement,
-      $dl,
-      priorApiType,
-      githubSourceLink,
-      id,
-    );
-    if (props) {
-      return [await generateMdxComponent(apiType, props), `</${apiType}>`];
-    }
-    return ["", ""];
+  if (componentProps) {
+    mergeProps(componentProps, extraProps);
+    return [
+      await generateMdxComponent(apiType, componentProps),
+      `</${apiType}>`,
+    ];
   }
-
-  if (apiType === "function") {
-    const props = prepareFunctionOrExceptionProps(
-      $firstElement,
-      $dl,
-      id,
-      githubSourceLink,
-    );
-    const extraProps = signatures.map(($child) =>
-      prepareFunctionOrExceptionProps(
-        $child,
-        $dl,
-        id,
-        prepareGitHubLink($child, false),
-      ),
-    );
-    mergeProps(apiType, props, extraProps);
-    return [await generateMdxComponent(apiType, props), `</${apiType}>`];
-  }
-
-  if (apiType === "exception") {
-    const props = prepareFunctionOrExceptionProps(
-      $firstElement,
-      $dl,
-      id,
-      githubSourceLink,
-    );
-    const extraProps = signatures.map(($child) =>
-      prepareFunctionOrExceptionProps(
-        $child,
-        $dl,
-        id,
-        prepareGitHubLink($child, false),
-      ),
-    );
-    mergeProps(apiType, props, extraProps);
-    return [await generateMdxComponent(apiType, props), `</${apiType}>`];
-  }
-
-  throw new Error(`Unhandled Python type: ${apiType}`);
+  return ["", ""];
 }
 
 // ------------------------------------------------------------------
 // Prepare props for MDX components
 // ------------------------------------------------------------------
 
+function prepareProps(
+  $: CheerioAPI,
+  $child: Cheerio<Element>,
+  $dl: Cheerio<any>,
+  priorApiType: ApiType | undefined,
+  apiType: ApiType,
+  githubSourceLink: string,
+  id: string,
+): componentProps | undefined {
+  const preparePropsPerApiType: Record<
+    string,
+    () => componentProps | undefined
+  > = {
+    class: () => prepareClassProps($child, githubSourceLink, id),
+    property: () =>
+      preparePropertyProps($child, $dl, priorApiType, githubSourceLink, id),
+    method: () =>
+      prepareMethodProps($, $child, $dl, priorApiType, githubSourceLink, id),
+    attribute: () =>
+      prepareAttributeProps($child, $dl, priorApiType, githubSourceLink, id),
+    function: () =>
+      prepareFunctionOrExceptionProps($child, $dl, id, githubSourceLink),
+    exception: () =>
+      prepareFunctionOrExceptionProps($child, $dl, id, githubSourceLink),
+  };
+
+  if (!(apiType in preparePropsPerApiType)) {
+    throw new Error(`Unhandled Python type: ${apiType}`);
+  }
+
+  return preparePropsPerApiType[apiType]();
+}
+
 function prepareClassProps(
   $child: Cheerio<any>,
   githubSourceLink: string,
   id: string,
-) {
+): componentProps {
   return {
     id,
     signature: $child.html()!,
@@ -307,10 +251,10 @@ export async function generateMdxComponent(
   const value = props.attributeValue
     ? props.attributeValue.replaceAll("'", "&#x27;")
     : undefined;
-  const signature = await htmlHeaderToMd(props.signature!);
+  const signature = await htmlSignatureToMd(props.signature!);
   const extraSignatures: string[] = [];
   for (const sig of props.extraSignatures ?? []) {
-    extraSignatures.push(`&#x27;${await htmlHeaderToMd(sig!)}&#x27;`);
+    extraSignatures.push(`&#x27;${await htmlSignatureToMd(sig!)}&#x27;`);
   }
 
   return `<${apiType} 
@@ -324,8 +268,6 @@ export async function generateMdxComponent(
     >
   `;
 }
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
  * Removes the original link from sphinx.ext.viewcode and returns the HTML string for our own link.
@@ -367,23 +309,22 @@ function findByText(
 }
 
 export function mergeProps(
-  apiType: ApiType,
   componentProps: componentProps,
   props: componentProps[],
 ): void {
+  componentProps.extraSignatures = [];
   for (const prop of props) {
-    if (apiType == "attribute" || !prop.signature) {
+    if (props.length == 0 || !prop.signature) {
       continue;
-    }
-
-    if (!componentProps.extraSignatures) {
-      componentProps.extraSignatures = [];
     }
     componentProps.extraSignatures.push(prop.signature);
   }
 }
 
-async function htmlHeaderToMd(html: string): Promise<string> {
+/**
+ * Converts a given HTML into markdown
+ */
+async function htmlSignatureToMd(html: string): Promise<string> {
   const file = await unified()
     .use(rehypeParse)
     .use(rehypeRemark)

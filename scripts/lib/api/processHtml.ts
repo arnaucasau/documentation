@@ -290,28 +290,32 @@ export async function processMembersAndSetMeta(
 
     const bodyElements: string[] = [];
     const signatures: Cheerio<Element>[] = [];
+
     for (const child of $dl.children().toArray()) {
       const $child = $(child);
       if (child.name !== "dt" || !apiType) {
         bodyElements.push(`<div>${$child.html()}</div>`);
         continue;
       }
-
       signatures.push($child);
     }
 
-    const [openTag, closeTag] = await processMdxComponent(
-      $,
-      $main,
-      signatures,
-      $dl,
-      priorApiType,
-      apiType!,
-      id,
-    );
-    $dl.replaceWith(
-      `<div>${openTag}\n${bodyElements.join("\n")}\n${closeTag}</div>`,
-    );
+    if (signatures.length == 0) {
+      $dl.replaceWith(`<div>${bodyElements.join("\n")}</div>`);
+    } else {
+      const [openTag, closeTag] = await processMdxComponent(
+        $,
+        $main,
+        signatures,
+        $dl,
+        priorApiType,
+        apiType!,
+        id,
+      );
+      $dl.replaceWith(
+        `<div>${openTag}\n${bodyElements.join("\n")}\n${closeTag}</div>`,
+      );
+    }
   }
 }
 
