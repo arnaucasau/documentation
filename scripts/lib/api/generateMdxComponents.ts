@@ -17,6 +17,32 @@ export type componentProps = {
   extraSignatures?: string[];
 };
 
+
+function prepareProps(
+  $: CheerioAPI,
+  $child: Cheerio<Element>,
+  $dl: Cheerio<any>,
+  priorApiType: string | undefined,
+  apiType: ApiType,
+  githubSourceLink: string,
+  id: string
+  ): componentProps | undefined {    
+    const preparePropsPerApiType = {
+      "class" : () => prepareClassProps($child, githubSourceLink, id),
+      "property" : () => preparePropertyProps($child, $dl, priorApiType, githubSourceLink, id),
+      "method" : () => prepareMethodProps($, $child, $dl, priorApiType, githubSourceLink, id),
+      "attribute": () => prepareAttributeProps($child, $dl, priorApiType, githubSourceLink, id),
+      "function": () => prepareFunctionOrExceptionProps($child, $dl, id, githubSourceLink),
+      "exception": () => prepareFunctionOrExceptionProps($child, $dl, id, githubSourceLink),
+    }
+
+    if(apiType == "module"){
+      throw new Error(`Unhandled Python type: ${apiType}`);
+    }
+
+    return preparePropsPerApiType[apiType]();
+}
+
 export async function processMdxComponent(
   $: CheerioAPI,
   $main: Cheerio<any>,
