@@ -24,6 +24,7 @@ import { MdxJsxFlowElement } from "mdast-util-mdx-jsx";
 import { visit } from "unist-util-visit";
 import { Emphasis, Root, Content } from "mdast";
 
+import { ObjectsInv } from "./objectsInv";
 import { processHtml } from "./processHtml";
 import { HtmlToMdResult } from "./HtmlToMdResult";
 import { Metadata } from "./Metadata";
@@ -36,6 +37,7 @@ export async function sphinxHtmlToMarkdown(options: {
   imageDestination: string;
   determineGithubUrl: (fileName: string) => string;
   releaseNotesTitle: string;
+  maybeObjectsInv: ObjectsInv | undefined;
 }): Promise<HtmlToMdResult> {
   const processedHtml = await processHtml(options);
   const markdown = await generateMarkdownFile(

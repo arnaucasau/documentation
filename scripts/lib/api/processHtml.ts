@@ -12,6 +12,7 @@
 
 import { CheerioAPI, Cheerio, load, Element } from "cheerio";
 
+import { ObjectsInv } from "./objectsInv";
 import { Image } from "./HtmlToMdResult";
 import { Metadata, ApiType } from "./Metadata";
 import { processMdxComponent } from "./generateApiComponents";
@@ -29,6 +30,7 @@ export async function processHtml(options: {
   imageDestination: string;
   determineGithubUrl: (fileName: string) => string;
   releaseNotesTitle: string;
+  maybeObjectsInv: ObjectsInv | undefined;
 }): Promise<ProcessedHtml> {
   const {
     html,
@@ -36,6 +38,7 @@ export async function processHtml(options: {
     imageDestination,
     determineGithubUrl,
     releaseNotesTitle,
+    maybeObjectsInv,
   } = options;
   const $ = load(html);
   const $main = $(`[role='main']`);
@@ -60,7 +63,7 @@ export async function processHtml(options: {
   preserveMathBlockWhitespace($, $main);
 
   const meta: Metadata = {};
-  await processMembersAndSetMeta($, $main, meta);
+  await processMembersAndSetMeta($, $main, meta, fileName, maybeObjectsInv);
   maybeSetModuleMetadata($, $main, meta);
   if (meta.apiType === "module") {
     updateModuleHeadings($, $main, meta);
@@ -259,10 +262,23 @@ export function removeColonSpans($main: Cheerio<any>): void {
   $main.find(".colon").remove();
 }
 
+export function getId($dl: Cheerio<any>, fileName: string, maybeObjectsInv: ObjectsInv | undefined, apiType: ApiType | undefined): string{
+  const id = $dl.find("dt").attr("id") || "";
+  if(!maybeObjectsInv){
+    return id
+  }
+
+  const objInvId = maybeObjectsInv.entries.find((e) => e.uri == `${fileName}#${id}` && e.domainAndRole == `py:${apiType}`)?.name;
+
+  return objInvId || "";
+}
+
 export async function processMembersAndSetMeta(
   $: CheerioAPI,
   $main: Cheerio<any>,
   meta: Metadata,
+  fileName: string,
+  maybeObjectsInv: ObjectsInv | undefined,
 ): Promise<void> {
   let continueMapMembers = true;
   while (continueMapMembers) {
@@ -279,8 +295,8 @@ export async function processMembersAndSetMeta(
     }
 
     const $dl = $(dl);
-    const id = $dl.find("dt").attr("id") || "";
     const apiType = getApiType($dl);
+    const id = getId($dl, fileName, maybeObjectsInv, apiType);
 
     const priorApiType = meta.apiType;
     if (!priorApiType) {

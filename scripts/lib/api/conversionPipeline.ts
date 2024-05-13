@@ -53,6 +53,7 @@ export async function runConversionPipeline(
     docsBaseFolder,
     markdownPath,
     files,
+    maybeObjectsInv,
   );
 
   const results = await postProcessResults(
@@ -100,6 +101,7 @@ async function convertFilesToMarkdown(
   docsBaseFolder: string,
   markdownPath: string,
   filePaths: string[],
+  maybeObjectsInv: ObjectsInv | undefined,
 ): Promise<HtmlToMdResultWithUrl[]> {
   const results = [];
   for (const file of filePaths) {
@@ -110,6 +112,7 @@ async function convertFilesToMarkdown(
       determineGithubUrl: pkg.determineGithubUrlFn(),
       imageDestination: pkg.outputDir("/images"),
       releaseNotesTitle: pkg.releaseNotesTitle(),
+      maybeObjectsInv
     });
 
     // Avoid creating an empty markdown file for HTML files without content
