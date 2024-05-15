@@ -36,11 +36,8 @@ export class ExternalLink {
   async check(): Promise<string | undefined> {
     let error: string = "";
     try {
-      const headers: HeadersInit = { "User-Agent": "qiskit-documentation-broken-links-finder" };
-      console.log(process.env.GITHUB_TOKEN);
-      //headers["Authorization"] = `token ${process.env.GITHUB_TOKEN}`;
       const response = await fetch(this.value, {
-        headers: { "User-Agent": "qiskit-documentation-broken-links-finder" },
+        headers: getHeaders(this.value),
         method: "HEAD",
       });
       if (response.status >= 300) {
@@ -59,4 +56,17 @@ export class ExternalLink {
       .map((originFile) => `    ${originFile}`);
     return `❌ ${error}. Appears in:\n${fileList.join("\n")}`;
   }
+}
+
+function getHeaders(link: string) {
+  const headers: HeadersInit = {
+    "User-Agent": "qiskit-documentation-broken-links-finder",
+  };
+
+  if (link.startsWith("https://github.com")) {
+    console.log(process.env.GITHUB_TOKEN);
+    headers["Authorization"] = process.env.GITHUB_TOKEN || "";
+  }
+
+  return headers;
 }

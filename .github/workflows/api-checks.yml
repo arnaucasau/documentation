@@ -37,4 +37,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: >
-          npm run check:external-links docs/support.mdx 
+          npm run check:external-links docs/support.mdx
