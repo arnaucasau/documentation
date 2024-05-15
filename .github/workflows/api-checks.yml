@@ -33,7 +33,7 @@ jobs:
           node-version: 18
       - name: Install Node.js dependencies
         run: npm ci
-      - name: Check internal links
+      - name: Check external link (Example)
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: >
