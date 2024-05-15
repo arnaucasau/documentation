@@ -36,6 +36,9 @@ export class ExternalLink {
   async check(): Promise<string | undefined> {
     let error: string = "";
     try {
+      const headers: HeadersInit = { "User-Agent": "qiskit-documentation-broken-links-finder" };
+      console.log(process.env.GITHUB_TOKEN);
+      //headers["Authorization"] = `token ${process.env.GITHUB_TOKEN}`;
       const response = await fetch(this.value, {
         headers: { "User-Agent": "qiskit-documentation-broken-links-finder" },
         method: "HEAD",
