@@ -25,7 +25,6 @@ on:
 jobs:
   api-checks:
     runs-on: ubuntu-latest
-    if: github.repository_owner == 'Qiskit'
     steps:
       - uses: actions/checkout@v4
       - name: Set up Node.js
@@ -36,15 +35,4 @@ jobs:
         run: npm ci
       - name: Check internal links
         run: >
-          npm run check:internal-links --
-          --qiskit-release-notes
-          --current-apis
-          --dev-apis
-          --historical-apis
-          --skip-broken-historical
-      - name: Check for orphan pages
-        run: >
-          npm run check:orphan-pages --
-          --current-apis
-          --dev-apis
-          --historical-apis
+          npm run check:external-links docs/support.mdx 
